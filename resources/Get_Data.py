@@ -22,4 +22,3 @@ class Get_Data:
         print("analiza_statystyczna_szeregu")
 
 getter = Get_Data(nazwa_instrumentu="^IXIC", start="2021-01-01", interval="1d")
-print(getter.make_diff())
