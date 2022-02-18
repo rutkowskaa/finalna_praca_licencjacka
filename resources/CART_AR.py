@@ -18,7 +18,7 @@ class KNN_AR():
 
     def cross_validation_pruning(self):
         print("pruning")
-        
+
     def predict(self):
         print("predict")
 
