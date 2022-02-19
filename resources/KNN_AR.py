@@ -54,8 +54,8 @@ class KNN_AR():
         :param k_max: Maksymalna wartość parametru k brana pod uwagę
         :return:
         """
-        dlugosc_okna = 1-dlugosc_okna
-        self.dlugosc_okna = 1-dlugosc_okna
+        #dlugosc_okna = 1-dlugosc_okna
+        self.dlugosc_okna = dlugosc_okna
         def RMSE_cross_val(preds):
             actual = self.data[self.prog:]
             print(actual, f"prog: {self.prog}")
@@ -64,34 +64,34 @@ class KNN_AR():
         i = 0
         all_preds = np.array([])
         pure_errors = np.array([])
-        self.prog = len(self.data)-int(dlugosc_okna*len(self.data))
+        self.prog = int(dlugosc_okna*len(self.data))
         #print("PROG ", self.data[self.prog:])
         for k in range(1, k_max):
 
             pred = np.array([])
 
-            for i in range(0, len(self.data)-int(dlugosc_okna*len(self.data))):
+            for i in range(int(dlugosc_okna*len(self.data)), len(self.data)):
 
-                wyrazenie = i + int(dlugosc_okna*len(self.data))
-                print("SPRAWDZENIE", wyrazenie)
-                if i + int(dlugosc_okna*len(self.data)) > len(self.data):
-                    print("BROKEN")
-                    break
+                #wyrazenie = i + int(dlugosc_okna*len(self.data))
+                print("SPRAWDZENIE", len(self.data))
+                #if i + int(dlugosc_okna*len(self.data)) > len(self.data):
+                #    print("BROKEN")
+                #    break
 
-                train_x = self.X.iloc[i:wyrazenie]
-                train_y = self.data.iloc[i:wyrazenie]
+                train_x = self.X.iloc[:i]
+                train_y = self.data.iloc[:i]
 
                 valid = neighbors.KNeighborsRegressor(n_neighbors=k)
                 valid.fit(X=train_x, y=train_y)
 
-                lim = self.X.iloc[wyrazenie, :]
+                lim = self.X.iloc[i, :]
                 #print("SPRAWDZENIE", lim, train_y.iloc[-1])
                 pred = np.append(pred, valid.predict(X=[lim.values]))
-                print(i)
+                print("i: ", i)
 
             #print("TUTAJ TERAZ ", len(pred))
             all_preds = np.append(all_preds, [k, pred])
-            pure_errors = np.append(pure_errors, [k, RMSE_cross_val(preds=pred)]) # RMSE
+            pure_errors = np.append(pure_errors, [k, RMSE_cross_val(preds=pred)]) # RMSE RMSE_cross_val(preds=pred)]
             pure_errors = pure_errors.reshape(-1, 2)
 
         bledy = np.array(pure_errors[:, 1])
@@ -116,6 +116,7 @@ class KNN_AR():
             
             model = neighbors.KNeighborsRegressor(n_neighbors=self.params['k'])
             model.fit(X=to_test_x, y=to_test_y)
+
 
 
         self.raw_forecasts = self.model.predict(self.X_test)
