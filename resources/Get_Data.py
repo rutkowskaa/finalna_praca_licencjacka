@@ -4,6 +4,7 @@ from statsmodels.stats.diagnostic import acorr_ljungbox
 from statsmodels.tsa.stattools import adfuller, pacf, acf, kpss
 import matplotlib.pyplot as plt
 import numpy as np
+from scipy import stats
 
 class Get_Data:
     def __init__(self, nazwa_instrumentu:str, start, interval:str):
@@ -20,6 +21,15 @@ class Get_Data:
         print("make_diff()")
         result = self.dane["Close"].diff(1)[1:]
         return result
+
+    def make_log_diff(self):
+        print("make_diff()")
+        result = np.log(self.dane["Close"]).diff(1)[1:]
+        return result
+
+    def make_norm_diff(self):
+
+        return 2
 
     @staticmethod
     def analiza_statystyczna_szeregu(szereg_pandas: pd.Series, max_lag:int = 30, co_sprawdzamy:str="DANE PODSTAWOWE", wykres:bool=True, crit:str="AIC"):
@@ -131,8 +141,8 @@ class Get_Data:
 
         def acf_pacf(acf_lag=30, pacf_lag=30):
             if len(szereg_pandas) < (acf_lag and pacf_lag):
-
                 acf_lag, pacf_lag = (len(szereg_pandas) / 2)-1, (len(szereg_pandas) / 2)-1
+
             this_pacf = pacf(szereg_pandas, nlags=pacf_lag)
             this_acf = acf(szereg_pandas, nlags=acf_lag)
 

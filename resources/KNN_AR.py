@@ -99,23 +99,12 @@ class KNN_AR():
         for i in range(len(self.data), len(self.all_data)):
             to_test_x = self.all_Xs[i - self.prog : i]
             to_test_y = self.all_data[i - self.prog : i]
-            #print(self.data_test)
-            #print("------------------------------------------")
-            #print("to_test_y")
-            #print(to_test_y.iloc[3:])
-            #print("------------------------------------------")
-            #print("to_test_x")
-            #print(to_test_x.iloc[:3])
-            #print("------------------------------------------")
-            #print("self.datatest")
-            #print(self.data_test.iloc[ :len(self.X_test)-3])
-            #break
+
             model = neighbors.KNeighborsRegressor(n_neighbors=self.params['k'])
             model.fit(X=to_test_x, y=to_test_y)
             forecasts = np.append(forecasts, model.predict([self.all_Xs.iloc[i]]))
 
         self.errors = self.data_test - forecasts
-
 
         print("forecast_raw")
         return forecasts
@@ -127,20 +116,20 @@ class KNN_AR():
         print("analizuj_reszty")
 
 
-getter = Get_Data.Get_Data("AAPL", "2022-01-01", "1h")#.make_diff()
-
-getter.analiza_statystyczna_szeregu(szereg_pandas=getter.make_diff())
-
-knn_ar = KNN_AR(data=getter.make_diff(), params={"lags": 3})
-opt = knn_ar.cross_validation_rolling_window(dlugosc_okna=1/3, k_max=15)
-
-knn_ar.fit(params_fit={"k": opt})
-
-forecasts = knn_ar.forecast_raw()
-
-plt.plot(knn_ar.data_test.values)
-plt.plot(forecasts, c='r')
-plt.figure(figsize=(20,10))
-plt.show()
-
-getter.analiza_statystyczna_szeregu(knn_ar.errors, co_sprawdzamy="reszty")
+#getter = Get_Data.Get_Data("AAPL", "2022-01-01", "1h")#.make_diff()
+#
+#getter.analiza_statystyczna_szeregu(szereg_pandas=getter.make_diff())
+#
+#knn_ar = KNN_AR(data=getter.make_diff(), params={"lags": 3})
+#opt = knn_ar.cross_validation_rolling_window(dlugosc_okna=1/3, k_max=15)
+#
+#knn_ar.fit(params_fit={"k": opt})
+#
+#forecasts = knn_ar.forecast_raw()
+#
+#plt.plot(knn_ar.data_test.values)
+#plt.plot(forecasts, c='r')
+#plt.figure(figsize=(20,10))
+#plt.show()
+#
+#getter.analiza_statystyczna_szeregu(knn_ar.errors, co_sprawdzamy="reszty")
