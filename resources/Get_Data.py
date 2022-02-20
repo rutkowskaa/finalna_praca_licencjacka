@@ -21,4 +21,6 @@ class Get_Data:
     def analiza_statystyczna_szeregu(szereg_pandas: pd.Series, max_lag:int = 30, co_sprawdzamy:str="DANE PODSTAWOWE", wykres:bool=True, crit:str="AIC"):
         print("analiza_statystyczna_szeregu")
 
+
+
 getter = Get_Data(nazwa_instrumentu="^IXIC", start="2021-01-01", interval="1d")
