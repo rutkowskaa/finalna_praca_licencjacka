@@ -23,6 +23,7 @@ class KNN_AR():
         self.data_test = self.data1[int(test_ratio*len(self.all_data)):]
 
         X = self.make_lags(self.all_data, params["lags"])
+        self.all_Xs = X
 
         self.X = X.iloc[:int(test_ratio*len(self.all_data))]
         self.X_test = X.iloc[int(test_ratio*len(self.all_data)):]
@@ -56,7 +57,7 @@ class KNN_AR():
         """
         #dlugosc_okna = 1-dlugosc_okna
         self.dlugosc_okna = dlugosc_okna
-        def RMSE_cross_val(preds):
+        def MSE_cross_val(preds):
             actual = self.data[self.prog:]
             print(actual, f"prog: {self.prog}")
             print("LEN ", len(preds), len(actual))
@@ -91,7 +92,7 @@ class KNN_AR():
 
             #print("TUTAJ TERAZ ", len(pred))
             all_preds = np.append(all_preds, [k, pred])
-            pure_errors = np.append(pure_errors, [k, RMSE_cross_val(preds=pred)]) # RMSE RMSE_cross_val(preds=pred)]
+            pure_errors = np.append(pure_errors, [k, MSE_cross_val(preds=pred)]) # RMSE RMSE_cross_val(preds=pred)]
             pure_errors = pure_errors.reshape(-1, 2)
 
         bledy = np.array(pure_errors[:, 1])
@@ -110,9 +111,9 @@ class KNN_AR():
     def forecast_raw(self):
         forecasts = np.array([])
 
-        for i in range(0, len(self.X_test) - int(len(self.X_test)*self.dlugosc_okna)):
-            to_test_x = self.X_test[i : i + int(len(self.X_test)*self.dlugosc_okna)]
-            to_test_y = self.data_test[i : i + int(len(self.X_test)*self.dlugosc_okna)]
+        for i in range(len(self.data), len(self.all_data)):
+            to_test_x = self.all_Xs[i : i + self.prog]
+            to_test_y = self.all_data[i : i + self.prog]
             
             model = neighbors.KNeighborsRegressor(n_neighbors=self.params['k'])
             model.fit(X=to_test_x, y=to_test_y)
@@ -136,10 +137,6 @@ knn_ar = KNN_AR(data=getter, params={"lags": 2})
 opt = knn_ar.cross_validation_rolling_window(dlugosc_okna=1/3, k_max=10)
 
 knn_ar.fit(params_fit={"k": opt})
-
-plt.plot(knn_ar.data.values)
-plt.plot(knn_ar.predict(), c='r')
-plt.show()
 
 plt.plot(knn_ar.data_test.values)
 plt.plot(knn_ar.forecast_raw(), c='r')
