@@ -7,7 +7,7 @@ import numpy as np
 from scipy import stats
 
 class Get_Data:
-    def __init__(self, nazwa_instrumentu:str, start, interval:str):
+    def __init__(self, nazwa_instrumentu:str, start, interval:str, end=None):
         """
         :param nazwa_instrumentu: Kod instrumentu zgodny z yahoo finance
         :param start: początek danych
@@ -15,8 +15,10 @@ class Get_Data:
         :param days_train:
         """
         tick = yf.Ticker(nazwa_instrumentu)
-        self.dane = tick.history(start=start, interval=interval)
-
+        if end == None:
+            self.dane = tick.history(start=start, interval=interval)
+        else:
+            self.dane = tick.history(start=start, end=end, interval=interval)
     def make_diff(self):
         print("make_diff()")
         result = self.dane["Close"].diff(1)[1:]
