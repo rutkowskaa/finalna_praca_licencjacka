@@ -30,8 +30,16 @@ class Get_Data:
         return result
 
     def make_norm_diff(self):
+        diff = self.make_diff()
+        minn = min(diff)
 
-        return 2
+        to_norm = diff - minn + 1
+        norm, _ = stats.boxcox(to_norm)
+
+        mean = np.mean(norm)
+        result = norm - mean
+
+        return result
 
     @staticmethod
     def analiza_statystyczna_szeregu(szereg_pandas: pd.Series, max_lag:int = 30, co_sprawdzamy:str="DANE PODSTAWOWE", wykres:bool=True, crit:str="AIC"):
