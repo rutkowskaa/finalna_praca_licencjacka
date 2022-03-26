@@ -9,6 +9,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import loss_functions
 import warnings
+import julia
+from julia import Main
+
 warnings.filterwarnings("ignore")
 
 class RF_AR():
@@ -77,11 +80,11 @@ class RF_AR():
                         print(depth, n_estimator)
                         pred = np.array([])
 
-                        for i in range(int(dlugosc_okna*len(self.data)), len(self.data)):
-
-                            train_x = self.X.iloc[:i]
-                            train_y = self.data.iloc[:i]
-
+                        for i in range(self.prog, len(self.data)):
+                            print("TU ", i - self.prog, i)
+                            train_x = self.X.iloc[i - self.prog : i]
+                            train_y = self.data.iloc[i - self.prog : i]
+                            print(len(train_x))
                             valid = RandomForestRegressor(max_depth=depth,
                                                           n_estimators=n_estimator,
                                                           min_samples_split=sample,
@@ -102,13 +105,36 @@ class RF_AR():
         opt_depth = np.where(bledy==min_errors)[0]
         result = pure_errors[opt_depth][0][0:len(params)]
         to_ret = {
-            "depth" : result[0],
+            "depth": result[0],
             "n_estimators": result[1],
             "min_sample_split": result[2],
             "min_samples_leaf": result[3]
         }
 
         return to_ret
+
+    def cross_validation_rolling_window_julia(self, dlugosc_okna:int, params:dict, verbose=True):
+        """
+        :param dlugosc_okna: długość okna branego pod uwagę do trenowania modelu. To powinien być ułamek.
+        :param max_depth: Maksymalna wartość parametru k brana pod uwagę
+        :return:
+        """
+        self.prog = int(dlugosc_okna * len(self.data))
+        j = julia.Julia()
+        julia.install()
+        #Main.using("DecisionTree")
+
+        #Main.using("RandomForest")
+
+        Main.dict = {"dlugosc_okna": dlugosc_okna,
+                     "prog": self.prog,
+                     "data": self.data,
+                     "X": self.X,
+                     "params": params}
+        Main.include('resources/fast_jl/rf_cross_val.jl')
+        #Main.include('RandomForest.jl')
+        fn = Main.rf_cross_val(Main.dict)
+        return fn
 
     def predict(self):
         self.predictions = self.model.predict(self.X)

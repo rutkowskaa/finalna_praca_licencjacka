@@ -2,6 +2,8 @@ import resources.Get_Data as Get_Data
 from resources.single_data.RF_AR import RF_AR
 import matplotlib.pyplot as plt
 import pandas as pd
+import julia
+
 
 
 getter = Get_Data.Get_Data("^IXIC", "2022-02-15", "1h")#.make_norm_diff()
@@ -32,5 +34,7 @@ plt.plot(cart_ar.data_test.values[:50])
 plt.plot(forecasts[:50], c='r')
 plt.figure(figsize=(20,10))
 plt.show()
+
+
 
 #getter.analiza_statystyczna_szeregu(cart_ar.errors, co_sprawdzamy="reszty")
