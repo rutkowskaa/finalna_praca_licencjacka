@@ -12,14 +12,15 @@ warnings.filterwarnings("ignore")
 
 
 class CART_ARX():
-    def __init__(self, data: pd.Series = None, to_predict: str = None, params: dict() = None,
+    def __init__(self, data: pd.Series = None, to_predict: str = None, params: dict = None,
+
                  plot_predicted_insample: bool = False, test_ratio: float = 0.95):
         if to_predict == None:
             self.to_predict = data.columns[0]
             print(f"NIE PODANO ZMIENNEJ OBJAŚNIANEJ, WYBRANO AUTOMATYCZNIE: {data.columns[0]}")
         else:
             self.to_predict = to_predict
-        print("Dalej")
+
         self.params = params
         self.test_ratio = test_ratio
         self.params = params
@@ -87,7 +88,7 @@ class CART_ARX():
 
             all_preds = np.append(all_preds, [depth, pred])
             pure_errors = np.append(pure_errors,
-                                    [depth, MSE_cross_val(preds=pred)])  # RMSE RMSE_cross_val(preds=pred)]
+                                    [depth, MSE_cross_val(preds=pred)])
             pure_errors = pure_errors.reshape(-1, 2)
 
         bledy = np.array(pure_errors[:, 1])

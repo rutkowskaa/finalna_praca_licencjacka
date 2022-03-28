@@ -10,11 +10,10 @@ function rf_cross_val(dict)
     prog = dict["prog"]
     Ys = dict["data"]
     X = dict["X"]
-    println("SHAPE", size(X))
     X = reshape(X, 88, 2)
     params = dict["params"]
     leng = length(Ys)
-    print(params)
+
 
     function MSE_cross_val(preds, prog)
         actual = Ys[prog:length(Ys)]
@@ -24,9 +23,9 @@ function rf_cross_val(dict)
 
     all_preds = []
 
-        for depth = 2: params["max_depth"]
+        for depth = 1: params["max_depth"]
             for n_estimator = 1: params["max_n_estimators"]
-                for sample = 2: params["min_samples_split"]
+                for sample = 2: params["min_sample_split"]
                     for leaf = 2: params["min_samples_leaf"]
 
                         pred = []
@@ -40,17 +39,10 @@ function rf_cross_val(dict)
 
                             train_x = reshape(train_x, 44, 2)
 
-                            model = DecisionTree.build_forest(train_y,
-                                                              train_x,
-                                                              n_trees=n_estimator,
-                                                              max_depth=depth,
-                                                              min_samples_split=sample,
-                                                              min_samples_leaf=leaf
-
-                            )
+                            model = DecisionTree.build_tree(train_y, train_x)
 
 
-                            prediction = apply_forest(model, train_x[1, :])
+                            prediction = apply_tree(model, train_x[1, :])
 
                             push!(pred, prediction)
 
@@ -62,7 +54,6 @@ function rf_cross_val(dict)
             end
         end
         bledy = reshape(all_preds, (length(params) + 1), Int(length(all_preds)/(length(params) + 1)))
-        print("ALL ", all_preds)
         mm = findmin(bledy[(length(params) + 1),:])
         minn = mm[2]
         result = bledy[:, minn]
@@ -70,7 +61,7 @@ function rf_cross_val(dict)
         to_ret = Dict(
             "depth" => result[1],
             "n_estimators"=> result[2],
-            "min_samples_split"=> result[3],
+            "min_sample_split"=> result[3],
             "min_samples_leaf"=> result[4]
         )
 

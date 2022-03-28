@@ -14,45 +14,45 @@ from julia import Main
 
 warnings.filterwarnings("ignore")
 
+
 class RF_AR():
-    def __init__(self, data:pd.Series=None, params:dict()=None, plot_predicted_insample:bool=False, test_ratio:float=0.95):
+    def __init__(self, data: pd.Series = None, params: dict = None, plot_predicted_insample: bool = False,
+                 test_ratio: float = 0.95):
         self.params = params
         self.test_ratio = test_ratio
         self.params = params
         self.lags = params["lags"]
-
 
         self.all_data = data.iloc[self.lags:]
         self.all_data_zapas = data
 
         self.data = data
         self.data1 = data[self.lags:]
-        self.data = data[:int(test_ratio*len(self.all_data))]
-        self.data_test = self.data1[int(test_ratio*len(self.all_data)):]
+        self.data = data[:int(test_ratio * len(self.all_data))]
+        self.data_test = self.data1[int(test_ratio * len(self.all_data)):]
 
         X = self.make_lags(self.all_data_zapas, params["lags"])
         self.all_Xs = X
 
-        self.X = X.iloc[:int(test_ratio*len(self.all_data))]
-        self.X_test = X.iloc[int(test_ratio*len(self.all_data)):]
+        self.X = X.iloc[:int(test_ratio * len(self.all_data))]
+        self.X_test = X.iloc[int(test_ratio * len(self.all_data)):]
 
-
-    def make_lags(self, input:pd.DataFrame, lags):
+    def make_lags(self, input: pd.DataFrame, lags):
         output = pd.DataFrame()
         for i in range(1, lags + 1):
             output.insert(loc=len(output.columns), column=f"{i}", value=input.shift(i))
         return output[lags:]
 
-
-
     def fit(self, params_fit):
         print(params_fit)
-        self.model = RandomForestRegressor(max_depth=params_fit["max_depth"])
+        self.model = RandomForestRegressor(max_depth=params_fit["max_depth"],
+                                           min_samples_split=params_fit["min_sample_split"],
+                                           min_samples_leaf=params_fit["min_samples_leaf"])
         self.model.fit(X=self.X, y=self.data)
         self.params = params_fit
         print("fit")
 
-    def cross_validation_rolling_window(self, dlugosc_okna:int, params:dict, verbose=True):
+    def cross_validation_rolling_window(self, dlugosc_okna: int, params: dict, verbose=True):
         """
         :param dlugosc_okna: długość okna branego pod uwagę do trenowania modelu. To powinien być ułamek.
         :param max_depth: Maksymalna wartość parametru k brana pod uwagę
@@ -68,9 +68,7 @@ class RF_AR():
 
         all_preds = np.array([])
         pure_errors = np.array([])
-        self.prog = int(dlugosc_okna*len(self.data))
-
-
+        self.prog = int(dlugosc_okna * len(self.data))
 
         for depth in range(1, params["max_depth"]):
             for n_estimator in range(1, params["max_n_estimators"]):
@@ -82,8 +80,8 @@ class RF_AR():
 
                         for i in range(self.prog, len(self.data)):
                             print("TU ", i - self.prog, i)
-                            train_x = self.X.iloc[i - self.prog : i]
-                            train_y = self.data.iloc[i - self.prog : i]
+                            train_x = self.X.iloc[i - self.prog: i]
+                            train_y = self.data.iloc[i - self.prog: i]
                             print(len(train_x))
                             valid = RandomForestRegressor(max_depth=depth,
                                                           n_estimators=n_estimator,
@@ -94,9 +92,9 @@ class RF_AR():
                             lim = self.X.iloc[i, :]
                             pred = np.append(pred, valid.predict(X=[lim.values]))
 
-
                         all_preds = np.append(all_preds, [depth, n_estimator, pred])
-                        pure_errors = np.append(pure_errors, [int(depth), int(n_estimator), int(sample), int(leaf), MSE_cross_val(preds=pred, prog=self.prog)])
+                        pure_errors = np.append(pure_errors, [int(depth), int(n_estimator), int(sample), int(leaf),
+                                                              MSE_cross_val(preds=pred, prog=self.prog)])
                         pure_errors = pure_errors.reshape(-1, len(params) + 1)
 
         bledy = np.array(pure_errors[:, len(params)])
@@ -113,7 +111,7 @@ class RF_AR():
 
         return to_ret
 
-    def cross_validation_rolling_window_julia(self, dlugosc_okna:int, params:dict, verbose=True):
+    def cross_validation_rolling_window_julia(self, dlugosc_okna: int, params: dict, verbose=True):
         """
         :param dlugosc_okna: długość okna branego pod uwagę do trenowania modelu. To powinien być ułamek.
         :param max_depth: Maksymalna wartość parametru k brana pod uwagę
@@ -122,9 +120,9 @@ class RF_AR():
         self.prog = int(dlugosc_okna * len(self.data))
         j = julia.Julia()
         julia.install()
-        #Main.using("DecisionTree")
+        # Main.using("DecisionTree")
 
-        #Main.using("RandomForest")
+        # Main.using("RandomForest")
 
         Main.dict = {"dlugosc_okna": dlugosc_okna,
                      "prog": self.prog,
@@ -132,7 +130,7 @@ class RF_AR():
                      "X": self.X.values,
                      "params": params}
         Main.include('resources/fast_jl/rf_cross_val.jl')
-        #Main.include('RandomForest.jl')
+        # Main.include('RandomForest.jl')
         fn = Main.rf_cross_val(Main.dict)
         return fn
 
@@ -144,8 +142,8 @@ class RF_AR():
         forecasts = np.array([])
 
         for i in range(len(self.data), len(self.all_data)):
-            to_test_x = self.all_Xs[i - self.prog : i]
-            to_test_y = self.all_data[i - self.prog : i]
+            to_test_x = self.all_Xs[i - self.prog: i]
+            to_test_y = self.all_data[i - self.prog: i]
 
             model = RandomForestRegressor(max_depth=self.params["max_depth"])
             model.fit(X=to_test_x, y=to_test_y)
@@ -161,5 +159,3 @@ class RF_AR():
 
     def analizuj_reszty(self):
         print("analizuj_reszty")
-
-
