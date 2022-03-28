@@ -46,6 +46,7 @@ class RF_AR():
     def fit(self, params_fit):
         print(params_fit)
         self.model = RandomForestRegressor(max_depth=params_fit["max_depth"],
+                                           n_estimators=params_fit["max_n_estimators"],
                                            min_samples_split=params_fit["min_samples_split"],
                                            min_samples_leaf=params_fit["min_samples_leaf"])
         self.model.fit(X=self.X, y=self.data)
@@ -144,7 +145,7 @@ class RF_AR():
             model = RandomForestRegressor(max_depth=self.params["max_depth"],
                                           min_samples_split=int(self.params["min_samples_split"]),
                                           min_samples_leaf=int(self.params["min_samples_leaf"]),
-                                          n_estimators=int(self.params["n_estimators"]))
+                                          n_estimators=int(self.params["max_n_estimators"]))
 
             model.fit(X=to_test_x, y=to_test_y)
             forecasts = np.append(forecasts, model.predict([self.all_Xs.iloc[i]]))

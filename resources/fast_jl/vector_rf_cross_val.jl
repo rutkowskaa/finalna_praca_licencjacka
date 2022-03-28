@@ -1,5 +1,6 @@
 
-function rf_cross_val(dict)
+
+function vector_cart_cross_val(dict)
 
     dlugosc_okna = dict["dlugosc_okna"]
     prog = dict["prog"]

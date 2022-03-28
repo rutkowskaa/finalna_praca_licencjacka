@@ -1,6 +1,6 @@
 import Get_Data
 import pandas as pd
-from sklearn.tree import DecisionTreeRegressor
+from sklearn.ensemble import RandomForestRegressor
 import Get_Data
 import pandas as pd
 import numpy as np
@@ -12,11 +12,11 @@ import warnings
 warnings.filterwarnings("ignore")
 
 
-class CART_ARX():
+class RF_ARX():
     def __init__(self, data: pd.Series = None, to_predict: str = None, params: dict = None,
-
                  plot_predicted_insample: bool = False, test_ratio: float = 0.95):
-        if to_predict == None:
+
+        if to_predict is None:
             self.to_predict = data.columns[0]
             print(f"NIE PODANO ZMIENNEJ OBJAŚNIANEJ, WYBRANO AUTOMATYCZNIE: {data.columns[0]}")
         else:
@@ -50,7 +50,8 @@ class CART_ARX():
 
     def fit(self, params_fit):
         print(params_fit)
-        self.model = DecisionTreeRegressor(max_depth=params_fit["max_depth"],
+        self.model = RandomForestRegressor(max_depth=params_fit["max_depth"],
+                                           n_estimators=int(params_fit["max_n_estimators"]),
                                            min_samples_split=int(params_fit["min_samples_split"]),
                                            min_samples_leaf=int(params_fit["min_samples_leaf"]))
         self.model.fit(X=self.X, y=self.data[self.to_predict])
@@ -86,7 +87,7 @@ class CART_ARX():
                         #print("TU ", i - self.prog, i)
                         train_x = self.X.iloc[i - self.prog: i]
                         train_y = self.data.iloc[i - self.prog: i][self.to_predict]
-                        valid = DecisionTreeRegressor(max_depth=depth,
+                        valid = RandomForestRegressor(max_depth=depth,
                                                       min_samples_split=sample,
                                                       min_samples_leaf=leaf)
                         valid.fit(X=train_x, y=train_y)
@@ -131,7 +132,7 @@ class CART_ARX():
                      "data": self.data[self.to_predict].values,
                      "X": self.X.values,
                      "params": params}
-        Main.include('resources/fast_jl/vector_cart_cross_val.jl')
+        Main.include('resources/fast_jl/vector_rf_cross_val.jl')
         fn = Main.vector_cart_cross_val(Main.dict)
         return fn
 
@@ -145,7 +146,7 @@ class CART_ARX():
             to_test_x = self.all_Xs[i - self.prog: i]
             to_test_y = self.all_data[i - self.prog: i]
 
-            model = DecisionTreeRegressor(max_depth=self.params["max_depth"])
+            model = RandomForestRegressor(max_depth=self.params["max_depth"])
             model.fit(X=to_test_x, y=to_test_y[self.to_predict])
             forecasts = np.append(forecasts, model.predict([self.all_Xs.iloc[i, :]]))
 

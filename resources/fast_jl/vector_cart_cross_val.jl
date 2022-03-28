@@ -1,5 +1,6 @@
 
-function rf_cross_val(dict)
+
+function vector_cart_cross_val(dict)
 
     dlugosc_okna = dict["dlugosc_okna"]
     prog = dict["prog"]
@@ -21,12 +22,11 @@ function rf_cross_val(dict)
     all_preds = []
 
         for depth = 2: params["max_depth"]
-            for n_estimator = 1: params["max_n_estimators"]
                 for sample = 2: params["min_samples_split"]
                     for leaf = 2: params["min_samples_leaf"]
 
                         pred = []
-                        println("$depth, $n_estimator, $sample, $leaf")
+                        println("$depth, $sample, $leaf")
                         for i = prog: leng
                             dolny = i - prog + 1
                             gorny = i - 1
@@ -35,30 +35,27 @@ function rf_cross_val(dict)
                             train_x = X[dolny : gorny, :]
 
                             train_x = reshape(train_x, gorny - dolny + 1, wymiary[2])
-                            #print(train_x)
-                            model = DecisionTree.build_forest(train_y,
-                                                              train_x,
-                                                              -1,
-                                                              n_estimator,
-                                                              1,
-                                                              depth,
-                                                              leaf,
-                                                              sample,
-                                                              0.0;
-                                                              rng = 3
-                            )
+
+                            model = DecisionTree.build_tree(train_y,
+                                                            train_x,
+                                                            0,
+                                                            depth,
+                                                            leaf,
+                                                            sample,
+                                                            0.0,
+                                                            rng=1)
 
 
-                            prediction = apply_forest(model, X[gorny + 1, :])
+                            prediction = apply_tree(model, X[gorny + 1, :])
 
                             push!(pred, prediction)
 
                         end
-                        all_preds = append!(all_preds, [depth, n_estimator, sample, leaf, MSE_cross_val(pred, prog)])
+                        all_preds = append!(all_preds, [depth, sample, leaf, MSE_cross_val(pred, prog)])
 
                     end
                 end
-            end
+
         end
         bledy = reshape(all_preds, (length(params) + 1), Int(length(all_preds)/(length(params) + 1)))
         mm = findmin(bledy[(length(params) + 1),:])
@@ -67,9 +64,8 @@ function rf_cross_val(dict)
 
         to_ret = Dict(
             "depth" => result[1],
-            "max_n_estimators"=> result[2],
-            "min_samples_split"=> result[3],
-            "min_samples_leaf"=> result[4]
+            "min_samples_split"=> result[2],
+            "min_samples_leaf"=> result[3]
         )
 
         return to_ret
