@@ -102,7 +102,7 @@ class RF_AR():
         bledy = np.array(pure_errors[:, len(params)])
 
         min_errors = min(bledy)
-        opt_depth = np.where(bledy==min_errors)[0]
+        opt_depth = np.where(bledy == min_errors)[0]
         result = pure_errors[opt_depth][0][0:len(params)]
         to_ret = {
             "depth": result[0],
@@ -128,8 +128,8 @@ class RF_AR():
 
         Main.dict = {"dlugosc_okna": dlugosc_okna,
                      "prog": self.prog,
-                     "data": self.data,
-                     "X": self.X,
+                     "data": self.data.values,
+                     "X": self.X.values,
                      "params": params}
         Main.include('resources/fast_jl/rf_cross_val.jl')
         #Main.include('RandomForest.jl')

@@ -32,14 +32,16 @@ class CART_ARX():
         self.X_test = X.iloc[int(test_ratio*len(self.all_data)):]
 
 
-
     def make_lags(self, input:pd.DataFrame, lags):
         output = pd.DataFrame()
         for i in range(1, lags + 1):
             print(i)
-            output.insert(loc=len(output.columns), column=[f"{i}", f"{i}"], value=input.shift(i))
+            for col in input.columns:
+                print(col)
+                print(input[col])
+                output[f"{col}{i}"] = input[col].shift(i)
+                #output.insert(loc=len(output.columns), column=[f"{col}{i}"], value=input[col].shift(i))
         return output[lags:]
-
 
 
     def fit(self, params_fit):
@@ -56,22 +58,23 @@ class CART_ARX():
         :return:
         """
         self.dlugosc_okna = dlugosc_okna
+
         def MSE_cross_val(preds):
             actual = self.data[self.prog:]
             mse = (1 / len(preds)) * sum((actual - preds) ** 2)
             return mse
+
         all_preds = np.array([])
         pure_errors = np.array([])
         self.prog = int(dlugosc_okna*len(self.data))
         for depth in range(1, max_depth):
-            print("Current depth: ", depth)
+            #print("Current depth: ", depth)
             pred = np.array([])
 
-            for i in range(int(dlugosc_okna*len(self.data)), len(self.data)):
+            for i in range(self.prog, len(self.data)):
 
-                train_x = self.X.iloc[:i]
-                train_y = self.data.iloc[:i]
-                print("TU", self.X.iloc)
+                train_x = self.X.iloc[i - self.prog: i]
+                train_y = self.data.iloc[i - self.prog: i]
                 valid = DecisionTreeRegressor(max_depth=depth)
                 valid.fit(X=train_x, y=train_y)
 
