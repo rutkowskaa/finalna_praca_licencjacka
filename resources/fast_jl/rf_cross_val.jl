@@ -1,20 +1,16 @@
 
-#using Pkg
-#
-#Pkg.add("DecisionTree")
-#using DecisionTree
-
 function rf_cross_val(dict)
 
     dlugosc_okna = dict["dlugosc_okna"]
     prog = dict["prog"]
     Ys = dict["data"]
     X = dict["X"]
-    println("SHAPE", size(X))
-    X = reshape(X, 88, 2)
+
+    wymiary = size(X)
+    X = reshape(X, wymiary[1], wymiary[2])
     params = dict["params"]
     leng = length(Ys)
-    print(params)
+
 
     function MSE_cross_val(preds, prog)
         actual = Ys[prog:length(Ys)]
@@ -33,24 +29,27 @@ function rf_cross_val(dict)
                         println("$depth, $n_estimator, $sample, $leaf")
                         for i = prog: leng
                             dolny = i - prog + 1
-                            gorny = i
+                            gorny = i - 1
 
                             train_y = Ys[dolny : gorny]
                             train_x = X[dolny : gorny, :]
 
-                            train_x = reshape(train_x, 44, 2)
-
+                            train_x = reshape(train_x, gorny - dolny + 1, wymiary[2])
+                            #print(train_x)
                             model = DecisionTree.build_forest(train_y,
                                                               train_x,
-                                                              n_trees=n_estimator,
-                                                              max_depth=depth,
-                                                              min_samples_split=sample,
-                                                              min_samples_leaf=leaf
-
+                                                              -1,
+                                                              n_estimator,
+                                                              1,
+                                                              depth,
+                                                              leaf,
+                                                              sample,
+                                                              0.0;
+                                                              rng = 3
                             )
 
 
-                            prediction = apply_forest(model, train_x[1, :])
+                            prediction = apply_forest(model, X[gorny + 1, :])
 
                             push!(pred, prediction)
 
@@ -62,7 +61,6 @@ function rf_cross_val(dict)
             end
         end
         bledy = reshape(all_preds, (length(params) + 1), Int(length(all_preds)/(length(params) + 1)))
-        print("ALL ", all_preds)
         mm = findmin(bledy[(length(params) + 1),:])
         minn = mm[2]
         result = bledy[:, minn]

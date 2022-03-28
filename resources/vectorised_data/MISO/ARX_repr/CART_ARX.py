@@ -111,8 +111,7 @@ class CART_ARX():
             model = DecisionTreeRegressor(max_depth=self.params["max_depth"])
             model.fit(X=to_test_x, y=to_test_y[self.to_predict])
             forecasts = np.append(forecasts, model.predict([self.all_Xs.iloc[i, :]]))
-        print(len(self.data_test))
-        print(len(forecasts))
+
         self.errors = self.data_test[self.to_predict] - forecasts
 
         print("forecast_raw")

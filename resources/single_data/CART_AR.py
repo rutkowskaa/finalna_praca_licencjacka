@@ -43,7 +43,7 @@ class CART_AR():
     def fit(self, params_fit):
         print(params_fit)
         self.model = DecisionTreeRegressor(max_depth=params_fit["max_depth"],
-                                           min_samples_split=params_fit["min_sample_split"],
+                                           min_samples_split=params_fit["min_samples_split"],
                                            min_samples_leaf=params_fit["min_samples_leaf"])
         self.model.fit(X=self.X, y=self.data)
         self.params = params_fit
@@ -123,8 +123,7 @@ class CART_AR():
                      "data": self.data.values,
                      "X": self.X.values,
                      "params": params}
-        Main.include('resources/fast_jl/rf_cross_val.jl')
-        # Main.include('RandomForest.jl')
+        Main.include('resources/fast_jl/cart_cross_val.jl')
         fn = Main.rf_cross_val(Main.dict)
         return fn
 
