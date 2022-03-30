@@ -69,6 +69,7 @@ class KNN_AR():
 
 
         for k in range(1, params["k_max"]):
+            print(k)
             for weight in params["weights"]:
                 for p in params["p"]:
                     pred = np.array([])

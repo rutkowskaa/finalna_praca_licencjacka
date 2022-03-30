@@ -1,3 +1,4 @@
+import scipy
 import yfinance as yf
 import pandas as pd
 from statsmodels.stats.diagnostic import acorr_ljungbox
@@ -138,16 +139,7 @@ class Get_Data:
             #    H = f"ERROR"
 #
             #print("HURST: ", H)
-            try:
-                plt.plot(acorr_ljungbox(szereg_pandas, lags=max_lag, return_df=True)['lb_pvalue'])
-                plt.title(f"Ljung-box pvalues dla {co_sprawdzamy}")
-                if acorr_ljungbox(szereg_pandas, lags=max_lag, return_df=True)['lb_pvalue'].all() < 0.05:
-                    plt.ylim(-0.01, 0.06)
-                else:
-                    plt.ylim(-0.01, 1.01)
-                plt.show()
-            except (FloatingPointError, ValueError):
-                print("Ljung-Box nie mógł zostać wygenerowany - FloatingPointError")
+
 
         def acf_pacf(acf_lag=30, pacf_lag=30):
             if len(szereg_pandas) < (acf_lag and pacf_lag):
@@ -156,11 +148,15 @@ class Get_Data:
             this_pacf = pacf(szereg_pandas, nlags=pacf_lag)
             this_acf = acf(szereg_pandas, nlags=acf_lag)
 
-            fig, axs = plt.subplots(2, figsize=(20, 10))
+            fig, axs = plt.subplots(3, figsize=(20, 10))
             if co_sprawdzamy is None:
                 fig.suptitle('Testy autokorelacji')
             else:
                 fig.suptitle(f'Testy autokorelacji dla {co_sprawdzamy}')
+
+            axs[0].grid()
+            axs[1].grid()
+            axs[2].grid()
 
             axs[0].title.set_text("Test PACF")
             axs[0].plot(this_pacf, marker='o')
@@ -176,10 +172,29 @@ class Get_Data:
             axs[1].axhline(y=-1.96 / np.sqrt(len(szereg_pandas)), linestyle='--', color='gray')
             axs[1].axhline(y=1.96 / np.sqrt(len(szereg_pandas)), linestyle='--', color='gray')
 
+            try:
+                axs[2].plot(acorr_ljungbox(szereg_pandas, lags=max_lag, return_df=True)['lb_pvalue'])
+                axs[2].title.set_text(f"Ljung-box pvalues dla {co_sprawdzamy}")
+                if acorr_ljungbox(szereg_pandas, lags=max_lag, return_df=True)['lb_pvalue'].all() < 0.05:
+                    pass#axs[2].ylim(-0.01, 0.06)
+                else:
+                    pass#axs[2].ylim(-0.01, 1.01)
+            except (FloatingPointError, ValueError):
+                print("Ljung-Box nie mógł zostać wygenerowany - FloatingPointError")
+
             plt.show()
+
 
         stacjonarny(trend='c')
         if wykres:
             acf_pacf(acf_lag=max_lag, pacf_lag=max_lag)
+
+        print("Pvalue testu Jarque-Bera: ", scipy.stats.jarque_bera(szereg_pandas)[1])  # czy test jarque bera będzie istotny na małej próbie jak taka?
+        print("Statystyka testu Jarque-Bera: ", scipy.stats.jarque_bera(szereg_pandas)[0])
+
+        szereg_pandas.hist(bins=int(len(szereg_pandas)/3))
+        plt.show()
+
+
 
 getter = Get_Data(nazwa_instrumentu="^IXIC", start="2021-01-01", interval="1d")
