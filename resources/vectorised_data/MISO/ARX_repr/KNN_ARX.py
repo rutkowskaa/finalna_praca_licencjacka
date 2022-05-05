@@ -12,9 +12,7 @@ warnings.filterwarnings("ignore")
 
 
 class KNN_ARX():
-    def __init__(self, data: pd.Series = None, to_predict: str = None, params: dict = None,
-
-                 plot_predicted_insample: bool = False, test_ratio: float = 0.95):
+    def __init__(self, data: pd.Series = None, to_predict: str = None, params: dict = None, plot_predicted_insample: bool = False, test_ratio: float = 0.95):
         if to_predict == None:
             self.to_predict = data.columns[0]
             print(f"NIE PODANO ZMIENNEJ OBJAŚNIANEJ, WYBRANO AUTOMATYCZNIE: {data.columns[0]}")

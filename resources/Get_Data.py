@@ -6,6 +6,7 @@ from statsmodels.tsa.stattools import adfuller, pacf, acf, kpss
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy import stats
+from statsmodels.tsa.stattools import bds
 
 class Get_Data:
     def __init__(self, nazwa_instrumentu:str, start, interval:str, end=None):
@@ -140,6 +141,7 @@ class Get_Data:
 #
             #print("HURST: ", H)
 
+        BDS = bds(szereg_pandas.values, max_dim=max_lag)[1]
 
         def acf_pacf(acf_lag=30, pacf_lag=30):
             if len(szereg_pandas) < (acf_lag and pacf_lag):
@@ -148,7 +150,7 @@ class Get_Data:
             this_pacf = pacf(szereg_pandas, nlags=pacf_lag)
             this_acf = acf(szereg_pandas, nlags=acf_lag)
 
-            fig, axs = plt.subplots(3, figsize=(20, 10))
+            fig, axs = plt.subplots(4, figsize=(20, 10))
             if co_sprawdzamy is None:
                 fig.suptitle('Testy autokorelacji')
             else:
@@ -175,13 +177,19 @@ class Get_Data:
             try:
                 axs[2].plot(acorr_ljungbox(szereg_pandas, lags=max_lag, return_df=True)['lb_pvalue'])
                 axs[2].title.set_text(f"Ljung-box pvalues dla {co_sprawdzamy}")
+                axs[2].axhline(y=0.05, linestyle='--', color='gray')
                 if acorr_ljungbox(szereg_pandas, lags=max_lag, return_df=True)['lb_pvalue'].all() < 0.05:
                     pass#axs[2].ylim(-0.01, 0.06)
                 else:
                     pass#axs[2].ylim(-0.01, 1.01)
             except (FloatingPointError, ValueError):
                 print("Ljung-Box nie mógł zostać wygenerowany - FloatingPointError")
-
+            axs[3].title.set_text("Test BDS")
+            axs[3].plot(BDS, marker='o')
+            axs[3].axhline(y=0, linestyle='--', color='gray')
+            axs[3].axvline(x=0, linestyle='--', color='gray')
+            axs[3].axhline(y=0.05, linestyle='--', color='gray')
+            axs[3].grid()
             plt.show()
 
 

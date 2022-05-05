@@ -1,3 +1,4 @@
+include("Loss.jl")
 
 
 function rf_cross_val(dict)
@@ -13,11 +14,11 @@ function rf_cross_val(dict)
     leng = length(Ys)
 
 
-    function MSE_cross_val(preds, prog)
-        actual = Ys[prog:length(Ys)]
-        mse = (1 / length(preds)) * sum((actual - preds).^ 2)
-        return mse
-    end
+    #function MSE_cross_val(preds, prog)
+    #    actual = Ys[prog:length(Ys)]
+    #    mse = (1 / length(preds)) * sum((actual - preds).^ 2)
+    #    return mse
+    #end
 
     all_preds = []
 
@@ -51,7 +52,7 @@ function rf_cross_val(dict)
                             push!(pred, prediction)
 
                         end
-                        all_preds = append!(all_preds, [depth, sample, leaf, MSE_cross_val(pred, prog)])
+                        all_preds = append!(all_preds, [depth, sample, leaf, Loss.MSE(pred, prog, Ys)])
 
                     end
                 end
@@ -63,9 +64,9 @@ function rf_cross_val(dict)
         result = bledy[:, minn]
 
         to_ret = Dict(
-            "depth" => result[1],
-            "min_samples_split"=> result[2],
-            "min_samples_leaf"=> result[3]
+            "max_depth" => Integer(result[1]),
+            "min_samples_split"=> Integer(result[2]),
+            "min_samples_leaf"=> Integer(result[3])
         )
 
         return to_ret

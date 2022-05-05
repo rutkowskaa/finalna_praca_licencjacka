@@ -44,13 +44,26 @@ class RF_AR():
         return output[lags:]
 
     def fit(self, params_fit):
-        print(params_fit)
-        self.model = RandomForestRegressor(max_depth=params_fit["max_depth"],
-                                           n_estimators=params_fit["max_n_estimators"],
-                                           min_samples_split=params_fit["min_samples_split"],
-                                           min_samples_leaf=params_fit["min_samples_leaf"])
-        self.model.fit(X=self.X, y=self.data)
         self.params = params_fit
+        print(params_fit)
+        predictions = np.array([])
+        model = RandomForestRegressor(max_depth=self.params["max_depth"],
+                                      min_samples_split=self.params["min_samples_split"],
+                                      min_samples_leaf=self.params["min_samples_leaf"],
+                                      n_estimators=self.params["n_estimators"])
+        for i in range(self.prog, len(self.data)):
+
+            to_test_x = self.X[i - self.prog: i]
+            to_test_y = self.data[i - self.prog: i]
+            print(to_test_y.values.shape, to_test_x.values.shape)
+
+            model.fit(X=to_test_x, y=to_test_y)
+            predictions = np.append(predictions, model.predict([self.all_Xs.iloc[i]]))
+
+        self.model = model.fit(X=self.X[len(self.data) - self.prog: len(self.data)], y=self.data[len(self.data) - self.prog: len(self.data)])
+        self.predictions = predictions
+        self.errors = self.data[self.prog:] - self.predictions
+
         print("fit")
 
     def cross_validation_rolling_window(self, dlugosc_okna: int, params: dict, verbose=True):
@@ -72,7 +85,7 @@ class RF_AR():
         self.prog = int(dlugosc_okna * len(self.data))
 
         for depth in range(1, params["max_depth"]):
-            for n_estimator in range(1, params["max_n_estimators"]):
+            for n_estimator in range(1, params["_estimators"]):
                 for sample in range(2, params["min_sample_split"]):
                     for leaf in range(2, params["min_samples_leaf"]):
 
@@ -132,25 +145,25 @@ class RF_AR():
         return fn
 
     def predict(self):
-        self.predictions = self.model.predict(self.X)
         return self.predictions
 
     def forecast_raw(self):
         forecasts = np.array([])
+        model = RandomForestRegressor(max_depth=self.params["max_depth"],
+                                      min_samples_split=int(self.params["min_samples_split"]),
+                                      min_samples_leaf=int(self.params["min_samples_leaf"]),
+                                      n_estimators=int(self.params["n_estimators"]))
 
         for i in range(len(self.data), len(self.all_data)):
             to_test_x = self.all_Xs[i - self.prog: i]
             to_test_y = self.all_data[i - self.prog: i]
 
-            model = RandomForestRegressor(max_depth=self.params["max_depth"],
-                                          min_samples_split=int(self.params["min_samples_split"]),
-                                          min_samples_leaf=int(self.params["min_samples_leaf"]),
-                                          n_estimators=int(self.params["max_n_estimators"]))
+
 
             model.fit(X=to_test_x, y=to_test_y)
             forecasts = np.append(forecasts, model.predict([self.all_Xs.iloc[i]]))
 
-        self.errors = self.data_test - forecasts
+        self.forecast_errors = self.data_test - forecasts
 
         print("forecast_raw")
         return forecasts
