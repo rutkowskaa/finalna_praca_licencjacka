@@ -11,25 +11,35 @@ warnings.filterwarnings("ignore")
 
 class KNN_AR():
     def __init__(self, data: pd.Series = None, params: dict = None, plot_predicted_insample: bool = False,
-                 test_ratio: float = 0.95):
+                 test_ratio: float = 0.95, dlugosc_okna: float = 1/3):
+        ###########################################
+        ###########################################
+        #  przypisanie danych do obiektu
+
+        self.dlugosc_okna = dlugosc_okna
         self.params = params
         self.test_ratio = test_ratio
         self.params = params
         self.lags = params["lags"]
+        self.prog = int(dlugosc_okna * len(data))
+        self.ratio_int = int(len(data) * self.test_ratio)
+        ###########################################
+        ###########################################
+        #  przetwarzanie danych Y i X
+        #  zmienna self.data = Y
+        #  zmienna self.X = X
 
-        self.all_data = data.iloc[self.lags:]
-        self.all_data_zapas = data
+        data = data.to_frame()
+        self.all_data = data
+        X = self.make_lags(self.all_data, params["lags"])
+        self.all_data = self.all_data[self.lags:]
 
-        self.data = data
-        self.data1 = data[self.lags:]
-        self.data = data[:int(test_ratio * len(self.all_data))]
-        self.data_test = self.data1[int(test_ratio * len(self.all_data)):]
-
-        X = self.make_lags(self.all_data_zapas, params["lags"])
+        self.data = self.all_data[:self.ratio_int]
+        self.data_test = self.all_data[self.ratio_int:]
         self.all_Xs = X
 
-        self.X = X.iloc[:int(test_ratio * len(self.all_data))]
-        self.X_test = X.iloc[int(test_ratio * len(self.all_data)):]
+        self.X = X.iloc[:self.ratio_int]
+        self.X_test = X.iloc[self.ratio_int:]
 
     def make_lags(self, input: pd.DataFrame, lags):
         output = pd.DataFrame()
@@ -55,7 +65,7 @@ class KNN_AR():
 
         self.model = model.fit(X=self.X[len(self.data) - self.prog: len(self.data)], y=self.data[len(self.data) - self.prog: len(self.data)])
         self.predictions = predictions
-        self.errors = self.data[self.prog:] - self.predictions
+        self.errors = self.data[self.prog:].values - self.predictions
 
         print("fit")
 
@@ -68,9 +78,8 @@ class KNN_AR():
         # dlugosc_okna = 1-dlugosc_okna
         self.dlugosc_okna = dlugosc_okna
 
-        def MSE_cross_val(preds):
-            actual = self.data[self.prog:]
-            mse = (1 / len(preds)) * sum((actual - preds) ** 2)
+        def MSE(actual, preds):
+            mse = (1 / len(preds)) * ((actual - preds) ** 2).sum()
             return mse
 
         i = 0  # debug, nie usuwac
@@ -94,19 +103,17 @@ class KNN_AR():
                         pred = np.append(pred, valid.predict(X=np.array([lim.values])))
 
                     all_preds = np.append(all_preds, [k, weight, p, pred])
-                    pure_errors = np.append(pure_errors, [k, weight, p, MSE_cross_val(
-                        preds=pred)])  # RMSE RMSE_cross_val(preds=pred)]
-                    pure_errors = pure_errors.reshape(-1, len(params) + 1)
+                    pure_errors = np.append(pure_errors, [k, weight, p, MSE(self.X.values, pred)])
+        pure_errors = pure_errors.reshape(-1, 4)
+        only_errors = pure_errors[:, len(params)].astype(np.float64)
+        min_error = min(only_errors)
 
-        bledy = np.array(pure_errors[:, len(params)])
-        min_errors = min(bledy)
-        optimal_params = np.where(bledy == min_errors)[0]  # [0] + 1
-        result = pure_errors[optimal_params, :][0][:len(params)]
-
+        where_are_the_params = np.where(only_errors == min_error)[0][0]
+        best_params = pure_errors[where_are_the_params, :]
         to_ret = {
-            "k_neighbors": int(result[0]),
-            "weights": result[1],
-            "p": int(result[2])
+            "k_neighbors": int(best_params[0]),
+            "weights": best_params[1],
+            "p": int(best_params[2])
         }
 
         print("cross_validation_rolling_window")
@@ -128,7 +135,7 @@ class KNN_AR():
             model.fit(X=to_test_x, y=to_test_y)
             forecasts = np.append(forecasts, model.predict(np.array([self.all_Xs.iloc[i]])))
 
-        self.errors = self.data_test - forecasts
+        self.forecast_errors = self.data_test.values - forecasts
 
         print("forecast_raw")
         return forecasts
