@@ -14,31 +14,42 @@ warnings.filterwarnings("ignore")
 
 class CART_ARX():
     def __init__(self, data: pd.Series = None, to_predict: str = None, params: dict = None,
-
-                 plot_predicted_insample: bool = False, test_ratio: float = 0.95):
+                 plot_predicted_insample: bool = False, test_ratio: float = 0.95, dlugosc_okna: float = 1/3):
         if to_predict == None:
             self.to_predict = data.columns[0]
             print(f"NIE PODANO ZMIENNEJ OBJAŚNIANEJ, WYBRANO AUTOMATYCZNIE: {data.columns[0]}")
         else:
             self.to_predict = to_predict
 
+        ###########################################
+        ###########################################
+        #  przypisanie danych do obiektu
+
+        self.dlugosc_okna = dlugosc_okna
         self.params = params
         self.test_ratio = test_ratio
         self.params = params
         self.lags = params["lags"]
+        self.prog = int(dlugosc_okna * len(data))
+        self.ratio_int = int(len(data) * self.test_ratio)
+        ###########################################
+        ###########################################
+        #  przetwarzanie danych Y i X
+        #  zmienna self.data = Y
+        #  zmienna self.X = X
 
-        self.all_data = data.iloc[self.lags:]
-        self.all_data_zapas = data
+        if data is pd.Series:
+            data = data.to_frame()
+        self.all_data = data
+        X = self.make_lags(self.all_data, params["lags"])
 
-        self.data = data
-        self.data1 = data[self.lags:]
-        self.data = data[:int(test_ratio * len(self.all_data))]
-        self.data_test = self.data1[int(test_ratio * len(self.all_data)):]
-        X = self.make_lags(self.all_data_zapas, params["lags"])
+        self.all_data = self.all_data[self.lags:][self.to_predict]
+        self.data = self.all_data[:self.ratio_int]
+        self.data_test = self.all_data[self.ratio_int:]
+
         self.all_Xs = X
-
-        self.X = X.iloc[:int(test_ratio * len(self.all_data))]
-        self.X_test = X.iloc[int(test_ratio * len(self.all_data)):]
+        self.X = X.iloc[:self.ratio_int]
+        self.X_test = X.iloc[self.ratio_int:]
 
     def make_lags(self, input: pd.DataFrame, lags):
         output = pd.DataFrame()
@@ -53,82 +64,77 @@ class CART_ARX():
         self.model = DecisionTreeRegressor(max_depth=params_fit["max_depth"],
                                            min_samples_split=int(params_fit["min_samples_split"]),
                                            min_samples_leaf=int(params_fit["min_samples_leaf"]))
-        self.model.fit(X=self.X, y=self.data[self.to_predict])
+        self.model.fit(X=self.X, y=self.data)
         self.params = params_fit
         print("fit")
 
-    def cross_validation_rolling_window(self, dlugosc_okna: int, params: dict, verbose=True):
+   # def cross_validation_rolling_window(self, dlugosc_okna: int, params: dict, verbose=True):
+   #     """
+   #     :param dlugosc_okna: długość okna branego pod uwagę do trenowania modelu. To powinien być ułamek.
+   #     :param max_depth: Maksymalna wartość parametru k brana pod uwagę
+   #     :return:
+   #     """
+   #     self.dlugosc_okna = dlugosc_okna
+#
+   #     # Tutaj zdefiniowane są funkcje błędów
+   #     def MSE_cross_val(preds, prog):
+   #         actual = self.data[self.prog:][self.to_predict]
+   #         mse = (1 / len(preds)) * sum((actual - preds) ** 2)
+   #         return mse
+#
+   #     all_preds = np.array([])
+   #     pure_errors = np.array([])
+   #     self.prog = int(dlugosc_okna * len(self.data))
+#
+   #     for depth in range(1, params["max_depth"]):
+   #         for sample in range(2, params["min_sample_split"]):
+   #             for leaf in range(2, params["min_samples_leaf"]):
+#
+   #                 print(depth, sample, leaf)
+   #                 pred = np.array([])
+#
+   #                 for i in range(self.prog, len(self.data)):
+   #                     #print("TU ", i - self.prog, i)
+   #                     train_x = self.X.iloc[i - self.prog: i]
+   #                     train_y = self.data.iloc[i - self.prog: i][self.to_predict]
+   #                     valid = DecisionTreeRegressor(max_depth=depth,
+   #                                                   min_samples_split=sample,
+   #                                                   min_samples_leaf=leaf)
+   #                     valid.fit(X=train_x, y=train_y)
+#
+   #                     lim = self.X.iloc[i, :]
+   #                     pred = np.append(pred, valid.predict(X=[lim.values]))
+#
+   #                 all_preds = np.append(all_preds, [depth, pred])
+   #                 pure_errors = np.append(pure_errors, [int(depth), int(sample), int(leaf),
+   #                                                       MSE_cross_val(preds=pred, prog=self.prog)])
+   #                 pure_errors = pure_errors.reshape(-1, len(params))
+#
+   #     print(pure_errors)
+   #     bledy = np.array(pure_errors[:, len(params) - 1])
+#
+   #     min_errors = min(bledy)
+   #     opt_depth = np.where(bledy == min_errors)[0]
+   #     result = pure_errors[opt_depth][0][0:len(params)]
+   #     to_ret = {
+   #         "depth": int(result[0]),
+   #         "min_sample_split": int(result[1]),
+   #         "min_samples_leaf": int(result[2])
+   #     }
+#
+   #     return to_ret
+
+    def cross_validation_rolling_window_julia(self, dlugosc_okna: float, params: dict, verbose=True):
         """
         :param dlugosc_okna: długość okna branego pod uwagę do trenowania modelu. To powinien być ułamek.
         :param max_depth: Maksymalna wartość parametru k brana pod uwagę
         :return:
         """
-        self.dlugosc_okna = dlugosc_okna
-
-        # Tutaj zdefiniowane są funkcje błędów
-        def MSE_cross_val(preds, prog):
-            actual = self.data[self.prog:][self.to_predict]
-            mse = (1 / len(preds)) * sum((actual - preds) ** 2)
-            return mse
-
-        all_preds = np.array([])
-        pure_errors = np.array([])
         self.prog = int(dlugosc_okna * len(self.data))
-
-        for depth in range(1, params["max_depth"]):
-            for sample in range(2, params["min_sample_split"]):
-                for leaf in range(2, params["min_samples_leaf"]):
-
-                    print(depth, sample, leaf)
-                    pred = np.array([])
-
-                    for i in range(self.prog, len(self.data)):
-                        #print("TU ", i - self.prog, i)
-                        train_x = self.X.iloc[i - self.prog: i]
-                        train_y = self.data.iloc[i - self.prog: i][self.to_predict]
-                        valid = DecisionTreeRegressor(max_depth=depth,
-                                                      min_samples_split=sample,
-                                                      min_samples_leaf=leaf)
-                        valid.fit(X=train_x, y=train_y)
-
-                        lim = self.X.iloc[i, :]
-                        pred = np.append(pred, valid.predict(X=[lim.values]))
-
-                    all_preds = np.append(all_preds, [depth, pred])
-                    pure_errors = np.append(pure_errors, [int(depth), int(sample), int(leaf),
-                                                          MSE_cross_val(preds=pred, prog=self.prog)])
-                    pure_errors = pure_errors.reshape(-1, len(params))
-
-        print(pure_errors)
-        bledy = np.array(pure_errors[:, len(params) - 1])
-
-        min_errors = min(bledy)
-        opt_depth = np.where(bledy == min_errors)[0]
-        result = pure_errors[opt_depth][0][0:len(params)]
-        to_ret = {
-            "depth": int(result[0]),
-            "min_sample_split": int(result[1]),
-            "min_samples_leaf": int(result[2])
-        }
-
-        return to_ret
-
-    def cross_validation_rolling_window_julia(self, dlugosc_okna: int, params: dict, verbose=True):
-        """
-        :param dlugosc_okna: długość okna branego pod uwagę do trenowania modelu. To powinien być ułamek.
-        :param max_depth: Maksymalna wartość parametru k brana pod uwagę
-        :return:
-        """
-        self.prog = int(dlugosc_okna * len(self.data))
-        #j = julia.Julia()
-        #julia.install()
-        # Main.using("DecisionTree")
-
-        # Main.using("RandomForest")
 
         Main.dict = {"dlugosc_okna": dlugosc_okna,
                      "prog": self.prog,
-                     "data": self.data[self.to_predict].values,
+                     "data": self.data.values,
                      "X": self.X.values,
                      "params": params}
         Main.include('resources/fast_jl/vector_cart_cross_val.jl')
@@ -141,15 +147,18 @@ class CART_ARX():
 
     def forecast_raw(self):
         forecasts = np.array([])
+        model = DecisionTreeRegressor(max_depth=self.params["max_depth"],
+                                      min_samples_split=int(self.params["min_samples_split"]),
+                                      min_samples_leaf=int(self.params["min_samples_leaf"]))
+
         for i in range(len(self.data), len(self.all_data)):
             to_test_x = self.all_Xs[i - self.prog: i]
             to_test_y = self.all_data[i - self.prog: i]
 
-            model = DecisionTreeRegressor(max_depth=self.params["max_depth"])
-            model.fit(X=to_test_x, y=to_test_y[self.to_predict])
+            model.fit(X=to_test_x, y=to_test_y)
             forecasts = np.append(forecasts, model.predict([self.all_Xs.iloc[i, :]]))
 
-        self.errors = self.data_test[self.to_predict] - forecasts
+        self.errors = self.data_test - forecasts
 
         print("forecast_raw")
         return forecasts

@@ -3,14 +3,13 @@ module Loss
 function MSE(preds, prog, Ys)
     actual = Ys[prog:length(Ys)]
     mse = (1 / length(preds)) * sum((actual - preds).^ 2)
-    return mse
+    return float(mse)
 end
 
 function MSE_inv(preds, prog, Ys)
     actual = Ys[prog:length(Ys)]
     inv = actual .* preds
     deleteat!(inv, findall(x->x>0, inv))
-    #print(inv)
     mse = (1 / length(preds)) * sum((actual - preds).^ 2) - sum(inv)
     return mse
 end

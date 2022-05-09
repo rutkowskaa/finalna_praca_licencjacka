@@ -1,4 +1,4 @@
-
+include("Loss.jl")
 
 function vector_cart_cross_val(dict)
 
@@ -6,9 +6,11 @@ function vector_cart_cross_val(dict)
     prog = dict["prog"]
     Ys = dict["data"]
     X = dict["X"]
-
     wymiary = size(X)
+
     X = reshape(X, wymiary[1], wymiary[2])
+
+    print(size(X))
     params = dict["params"]
     leng = length(Ys)
 
@@ -44,28 +46,29 @@ function vector_cart_cross_val(dict)
                                                             sample,
                                                             0.0,
                                                             rng=1)
-
+                            #println(apply_tree(model, X[gorny + 1, :]))
 
                             prediction = apply_tree(model, X[gorny + 1, :])
-
                             push!(pred, prediction)
+                            #print(pred)
 
                         end
-                        all_preds = append!(all_preds, [depth, sample, leaf, MSE_cross_val(pred, prog)])
+                        all_preds = append!(all_preds, [depth, sample, leaf, float(Loss.MSE(pred, prog, Ys))])
 
                     end
                 end
 
         end
         bledy = reshape(all_preds, (length(params) + 1), Int(length(all_preds)/(length(params) + 1)))
+        #print(bledy)
         mm = findmin(bledy[(length(params) + 1),:])
         minn = mm[2]
         result = bledy[:, minn]
 
         to_ret = Dict(
-            "depth" => result[1],
-            "min_samples_split"=> result[2],
-            "min_samples_leaf"=> result[3]
+            "max_depth" => Integer(result[1]),
+            "min_samples_split"=> Integer(result[2]),
+            "min_samples_leaf"=> Integer(result[3])
         )
 
         return to_ret
