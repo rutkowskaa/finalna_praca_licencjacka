@@ -45,8 +45,12 @@ def show_forcasts(forecasts, data, data_test):
     plt.plot(result, c='r')
     plt.grid()
     plt.show()
+
+    #
+    # Próbowałem wyprowadzić MSE penalizujące przeciwny kierunek prognozy do wartości rzeczywistej,
+    # ale nie zauważyłem żadnej różnicy
+    #
     print("SUMA: ", sum(np.squeeze(data_test.values) * np.array(forecasts) > 0),
           " / ", len(forecasts))
-
 
 show_forcasts(rf_ar.forecast_raw(), rf_ar.data, rf_ar.data_test)

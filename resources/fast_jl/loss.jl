@@ -20,7 +20,7 @@ function SMAPE(preds, prog, Ys)
 end
 
 function RMSE(preds, prog, Ys)
-    return sqrt(MSE_cross_val(preds, prog, Ys))
+    return sqrt(MSE(preds, prog, Ys))
 end
 
 function MSLE(preds, prog, Ys)
@@ -30,6 +30,7 @@ function MSLE(preds, prog, Ys)
 end
 
 function RMSLE(preds, prog, Ys)
+    print(MSLE(preds, prog, Ys))
     return sqrt(MSLE(preds, prog, Ys))
 end
 
