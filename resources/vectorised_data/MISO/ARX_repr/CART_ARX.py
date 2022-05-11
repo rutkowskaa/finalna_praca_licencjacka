@@ -15,6 +15,14 @@ warnings.filterwarnings("ignore")
 class CART_ARX():
     def __init__(self, data: pd.Series = None, to_predict: str = None, params: dict = None,
                  plot_predicted_insample: bool = False, test_ratio: float = 0.95, dlugosc_okna: float = 1/3):
+        """
+        :param data: Macierz Y do prognozy. Macierz X tworzy się automatycznie
+        :param to_predict: Macierz X powinna zawierać już zmienną egzogeniczną. Do prognozy brana jest albo kolumna o nazwie zdefiniowanej przez to_predict, albo wybierana jest automatycznie
+        :param params: Słownik zawierający parametry do drzewa decyzyjnego (zgodnie z API sklearn)
+        :param plot_predicted_insample: Niezaimplementowane
+        :param test_ratio: UŁAMEK rozdzielający data na 2 subsety - training/validation oraz test (out of sample)
+        :param dlugosc_okna: :param dlugosc_okna: długość okna walidacyjnego (OPCJONALNE! parametr i tak trzeba ustawić przy walidacji, używać tylko przy znanych z góry parametrach - inaczej coś się może rozkrzaczyć)
+        """
         if to_predict == None:
             self.to_predict = data.columns[0]
             print(f"NIE PODANO ZMIENNEJ OBJAŚNIANEJ, WYBRANO AUTOMATYCZNIE: {data.columns[0]}")
@@ -128,6 +136,7 @@ class CART_ARX():
         """
         :param dlugosc_okna: długość okna branego pod uwagę do trenowania modelu. To powinien być ułamek.
         :param max_depth: Maksymalna wartość parametru k brana pod uwagę
+        :param verbose: niezaimplementowane
         :return:
         """
         self.prog = int(dlugosc_okna * len(self.data))

@@ -15,7 +15,7 @@ function rf_cross_val(dict)
     all_preds = []
 
         for depth = 2: params["max_depth"]
-            for n_estimator = 1: params["n_estimators"]
+            for n_estimator = 2: params["n_estimators"]
                 for sample = 2: params["min_samples_split"]
                     for leaf = 2: params["min_samples_leaf"]
 
@@ -54,10 +54,12 @@ function rf_cross_val(dict)
                 end
             end
         end
-        bledy = reshape(all_preds, (length(params) + 1), Int(length(all_preds)/(length(params) + 1)))
-        mm = findmin(bledy[(length(params) + 1),:])
-        minn = mm[2]
-        result = bledy[:, minn]
+        bledy = reshape(all_preds, length(params), :)
+        tylko_bledy = bledy[length(params), :]
+
+        indeks_najmniejszego_bledu = findmin(tylko_bledy)[2]
+        result = bledy[:, indeks_najmniejszego_bledu]
+
 
         to_ret = Dict(
             "max_depth" => Integer(result[1]),

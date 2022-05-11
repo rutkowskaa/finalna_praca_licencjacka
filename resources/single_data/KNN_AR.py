@@ -12,6 +12,12 @@ warnings.filterwarnings("ignore")
 class KNN_AR():
     def __init__(self, data: pd.Series = None, params: dict = None, plot_predicted_insample: bool = False,
                  test_ratio: float = 0.95, dlugosc_okna: float = 1/3):
+        """
+        Wszystkie parametry analogiczne.
+
+        W przypadku KNN zastosowanie julii nie było konieczne - ten algorytm jest na tyle prosty,
+        że python bez problemu radzi sobie z optymalizacją w rozsądnym czasie.
+        """
         ###########################################
         ###########################################
         #  przypisanie danych do obiektu
@@ -58,7 +64,6 @@ class KNN_AR():
 
             to_test_x = self.X[i - self.prog: i]
             to_test_y = self.data[i - self.prog: i]
-            #print(to_test_y.values.shape, to_test_x.values.shape)
 
             model.fit(X=to_test_x, y=to_test_y)
             predictions = np.append(predictions, model.predict(self.X.iloc[i].values.reshape(-1, self.lags)))
@@ -69,7 +74,7 @@ class KNN_AR():
 
         print("fit")
 
-    def cross_validation_rolling_window(self, dlugosc_okna: int, params: dict):
+    def cross_validation_rolling_window(self, dlugosc_okna: float, params: dict):
         """
         :param dlugosc_okna: długość okna branego pod uwagę do trenowania modelu. To powinien być ułamek.
         :param k_max: Maksymalna wartość parametru k brana pod uwagę
@@ -103,7 +108,8 @@ class KNN_AR():
                         pred = np.append(pred, valid.predict(X=np.array([lim.values])))
 
                     all_preds = np.append(all_preds, [k, weight, p, pred])
-                    pure_errors = np.append(pure_errors, [k, weight, p, MSE(self.X.values, pred)])
+                    pure_errors = np.append(pure_errors, [k, weight, p, MSE(self.data.values[self.prog:], pred)])
+
         pure_errors = pure_errors.reshape(-1, 4)
         only_errors = pure_errors[:, len(params)].astype(np.float64)
         min_error = min(only_errors)
@@ -146,20 +152,20 @@ class KNN_AR():
     def analizuj_reszty(self):
         print("analizuj_reszty")
 
-# getter = Get_Data.Get_Data("AAPL", "2022-01-01", "1h")#.make_diff()
+#getter = Get_Data.Get_Data("AAPL", "2022-01-01", "1d")#.make_diff()
 #
-# getter.analiza_statystyczna_szeregu(szereg_pandas=getter.make_diff())
+#knn_ar = KNN_AR(data=getter.make_diff(), params={"lags": 1})
+#opt = knn_ar.cross_validation_rolling_window(dlugosc_okna=1/3, params={
+#    'k_neighbors': 5,
+#    'p': [1, 2],
+#    'weights': ["uniform", "distance"]
+#})
 #
-# knn_ar = KNN_AR(data=getter.make_diff(), params={"lags": 3})
-# opt = knn_ar.cross_validation_rolling_window(dlugosc_okna=1/3, k_max=15)
+#knn_ar.fit(params_fit=opt)
 #
-# knn_ar.fit(params_fit={"k": opt})
+#forecasts = knn_ar.forecast_raw()
 #
-# forecasts = knn_ar.forecast_raw()
-#
-# plt.plot(knn_ar.data_test.values)
-# plt.plot(forecasts, c='r')
-# plt.figure(figsize=(20,10))
-# plt.show()
-#
-# getter.analiza_statystyczna_szeregu(knn_ar.errors, co_sprawdzamy="reszty")
+#plt.plot(knn_ar.data_test.values)
+#plt.plot(forecasts, c='r')
+#plt.figure(figsize=(20,10))
+#plt.show()

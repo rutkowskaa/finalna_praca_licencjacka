@@ -174,6 +174,6 @@ class Get_Vectorised_Data:
         if wykres:
             acf_pacf(acf_lag=max_lag, pacf_lag=max_lag)
 
-getter = Get_Vectorised_Data(nazwa_instrumentu=["^IXIC", "^GSPC"], start="2021-01-01", interval="1d").make_diff()
+#getter = Get_Vectorised_Data(nazwa_instrumentu=["^IXIC", "^GSPC"], start="2021-01-01", interval="1d").make_diff()
 
-print(getter)
+#print(getter)

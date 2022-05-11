@@ -1,5 +1,10 @@
 include("Loss.jl")
 
+# Uwagi:
+# Julia zaczyna indeksowanie od 1 nie od 0 jak w pythonie - pilnowałem tego, ale jest to duże pole do błędów
+# Reshape w julii zmienia typ obiektu
+# Konwersja python dataframe do julia dataframe jest nietrywialna - konieczne jest korzystanie z array.
+# Arraye w julii są szybsze od np.array, ale konwersja jest automatyczna
 
 function rf_cross_val(dict)
 
@@ -13,14 +18,7 @@ function rf_cross_val(dict)
     params = dict["params"]
     leng = length(Ys)
 
-
-    #function MSE_cross_val(preds, prog)
-    #    actual = Ys[prog:length(Ys)]
-    #    mse = (1 / length(preds)) * sum((actual - preds).^ 2)
-    #    return mse
-    #end
-
-    all_preds = []
+    all_preds = []  # - tutaj trzymamy wszystkie predykcje
 
         for depth = 2: params["max_depth"]
                 for sample = 2: params["min_samples_split"]
@@ -28,6 +26,7 @@ function rf_cross_val(dict)
 
                         pred = []
                         println("$depth, $sample, $leaf")
+
                         for i = prog: leng
                             dolny = i - prog + 1
                             gorny = i - 1
@@ -58,10 +57,13 @@ function rf_cross_val(dict)
                 end
 
         end
-        bledy = reshape(all_preds, (length(params) + 1), Int(length(all_preds)/(length(params) + 1)))
-        mm = findmin(bledy[(length(params) + 1),:])
-        minn = mm[2]
-        result = bledy[:, minn]
+
+        bledy = reshape(all_preds, length(params) + 1, :)
+        tylko_bledy = bledy[length(params) + 1, :]
+
+        indeks_najmniejszego_bledu = findmin(tylko_bledy)[2]
+        result = bledy[:, indeks_najmniejszego_bledu]
+
 
         to_ret = Dict(
             "max_depth" => Integer(result[1]),

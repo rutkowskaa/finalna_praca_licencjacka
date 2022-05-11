@@ -60,12 +60,12 @@ class RF_AR():
         model = RandomForestRegressor(max_depth=self.params["max_depth"],
                                       min_samples_split=self.params["min_samples_split"],
                                       min_samples_leaf=self.params["min_samples_leaf"],
-                                      n_estimators=self.params["n_estimators"])
+                                      n_estimators=self.params["n_estimators"],
+                                      bootstrap=False)
         for i in range(self.prog, len(self.data)):
 
             to_test_x = self.X[i - self.prog: i]
             to_test_y = self.data[i - self.prog: i]
-            print(to_test_y.values.shape, to_test_x.values.shape)
 
             model.fit(X=to_test_x, y=to_test_y)
             predictions = np.append(predictions, model.predict([self.all_Xs.iloc[i]]))
@@ -136,7 +136,7 @@ class RF_AR():
 #
     #    return to_ret
 
-    def cross_validation_rolling_window_julia(self, dlugosc_okna: int, params: dict, verbose=True):
+    def cross_validation_rolling_window_julia(self, dlugosc_okna: float, params: dict, verbose=True):
         """
         :param dlugosc_okna: długość okna branego pod uwagę do trenowania modelu. To powinien być ułamek.
         :param max_depth: Maksymalna wartość parametru k brana pod uwagę

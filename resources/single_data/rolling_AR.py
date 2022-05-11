@@ -5,7 +5,7 @@ import Get_Data
 from statsmodels.tsa.arima.model import ARIMA
 
 class AR_predict():
-    def __init__(self, data, p, okno=1/3, test_ratio=0.7):
+    def __init__(self, data: pd.Series, p: int, okno: float = 1/3, test_ratio: float = 0.7):
         self.forecast_errors = None
         predictions = np.array([])
         self.data = data

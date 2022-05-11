@@ -43,6 +43,17 @@ class Get_Data:
 
         return result
 
+    def make_diff_with_volume(self):
+        dane = self.dane[["Close", "Volume"]]
+        dane = dane.diff(1)[1:]
+        return dane
+
+    def make_diff_with_volume_undiffed(self):
+        dane = self.dane[["Close", "Volume"]]
+        dane = dane.diff(1)[1:]
+        dane["Volume"] = self.dane["Volume"]
+        return dane
+
     @staticmethod
     def analiza_statystyczna_szeregu(szereg_pandas: pd.Series, max_lag:int = 30, co_sprawdzamy:str="DANE PODSTAWOWE", wykres:bool=True, crit:str="AIC"):
         print("analiza_statystyczna_szeregu")

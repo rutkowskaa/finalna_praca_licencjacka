@@ -20,7 +20,7 @@ class CART_AR():
 
         :param data: Macierz Y do prognozy. Macierz X tworzy się automatycznie
         :param params: Słownik zawierający parametry do drzewa decyzyjnego (zgodnie z API sklearn)
-        :param plot_predicted_insample: czy pokazać wykres z fitted?
+        :param plot_predicted_insample: czy pokazać wykres z fitted? Niezaimplementowane
         :param test_ratio: UŁAMEK rozdzielający data na 2 subsety - training/validation oraz test (out of sample)
         :param dlugosc_okna: długość okna walidacyjnego (OPCJONALNE! parametr i tak trzeba ustawić przy walidacji, używać tylko przy znanych z góry parametrach - inaczej coś się może rozkrzaczyć)
         """
@@ -32,10 +32,9 @@ class CART_AR():
         self.dlugosc_okna = dlugosc_okna
         self.params = params
         self.test_ratio = test_ratio
-        self.params = params
         self.lags = params["lags"]
-        self.prog = int(dlugosc_okna * len(data))
-        self.ratio_int = int(len(data) * self.test_ratio)
+        self.prog = int(dlugosc_okna * len(data))  # - to jest zmienna reprezentująca długość okna walidacyjnego W LICZBIE NATURALNEJ
+        self.ratio_int = int(len(data) * self.test_ratio)  # - to jest zmienna reprezentująca długość danych train/validation. Jeśli test_ratio == 0.7 to len(train) = 70 a len(test) = 30
         ###########################################
         ###########################################
         #  przetwarzanie danych Y i X
@@ -45,23 +44,34 @@ class CART_AR():
         data = data.to_frame()
         self.all_data = data
         X = self.make_lags(self.all_data, params["lags"])
-        self.all_data = self.all_data[self.lags:]
 
+        self.all_data = self.all_data[self.lags:]
         self.data = self.all_data[:self.ratio_int]
         self.data_test = self.all_data[self.ratio_int:]
-        self.all_Xs = X
 
+        self.all_Xs = X
         self.X = X.iloc[:self.ratio_int]
         self.X_test = X.iloc[self.ratio_int:]
 
 
     def make_lags(self, input: pd.DataFrame, lags):
+        """
+        metoda tworząca opóźnienia do macierzy X. NIE ZWRACA PIERWSZYCH WARTOŚCI Z NAN
+        :param input: dane do wytworzenia opóźnień
+        :param lags: ile opóźnień?
+        :return:
+        """
         output = pd.DataFrame()
         for i in range(1, lags + 1):
             output.insert(loc=len(output.columns), column=f"{i}", value=input.shift(i))
         return output[lags:]
 
     def fit(self, params_fit):
+        """
+        Ta metoda tworzy zmienną predictions (tylko in-sample!) oraz aktualizuje wartości params obiektu do zoptymalizowanych (podanych w input).
+        Bez zaktualizowania self.params nie zadziała metoda forecast_raw
+        :param params_fit: parametry OPTYMALNE
+        """
         self.params = params_fit
 
         predictions = np.array([])
@@ -78,8 +88,8 @@ class CART_AR():
             predictions = np.append(predictions, model.predict([self.all_Xs.iloc[i]]))
 
         self.model = model.fit(X=self.X[len(self.data) - self.prog: len(self.data)], y=self.data[len(self.data) - self.prog: len(self.data)])
-        self.predictions = predictions
-        self.errors = self.data[self.prog:].values - self.predictions
+        self.predictions = predictions  # prognozy in-sample
+        self.errors = self.data[self.prog:].values - self.predictions  # błędy in-sample
 
         print("fit")
 
@@ -146,7 +156,7 @@ class CART_AR():
 #
     #    return to_ret
 
-    def cross_validation_rolling_window_julia(self, dlugosc_okna: int, params: dict, verbose=True):
+    def cross_validation_rolling_window_julia(self, dlugosc_okna: float, params: dict, verbose=True):
         """
         :param dlugosc_okna: długość okna branego pod uwagę do trenowania modelu. To powinien być ułamek.
         :param max_depth: Maksymalna wartość parametru k brana pod uwagę
@@ -169,6 +179,10 @@ class CART_AR():
         return self.predictions
 
     def forecast_raw(self):
+        """
+        Prognoza dla datasetu testowego. W nazwie 'raw' ponieważ zwraca wartości nieskumulowane.
+        :return:
+        """
         forecasts = np.array([])
 
         for i in range(len(self.data), len(self.all_data)):
@@ -181,7 +195,7 @@ class CART_AR():
             model.fit(X=to_test_x, y=to_test_y)
             forecasts = np.append(forecasts, model.predict([self.all_Xs.iloc[i]]))
 
-        self.forecast_errors = self.data_test.values - forecasts
+        self.forecast_errors = self.data_test.values - forecasts  # błędy z datasetu testowego
 
         print("forecast_raw")
         return forecasts

@@ -1,6 +1,6 @@
+include("Loss.jl")
 
-
-function vector_cart_cross_val(dict)
+function vector_rf_cross_val(dict)
 
     dlugosc_okna = dict["dlugosc_okna"]
     prog = dict["prog"]
@@ -12,17 +12,10 @@ function vector_cart_cross_val(dict)
     params = dict["params"]
     leng = length(Ys)
 
-
-    function MSE_cross_val(preds, prog)
-        actual = Ys[prog:length(Ys)]
-        mse = (1 / length(preds)) * sum((actual - preds).^ 2)
-        return mse
-    end
-
     all_preds = []
 
         for depth = 2: params["max_depth"]
-            for n_estimator = 1: params["max_n_estimators"]
+            for n_estimator = 2: params["n_estimators"]
                 for sample = 2: params["min_samples_split"]
                     for leaf = 2: params["min_samples_leaf"]
 
@@ -55,22 +48,24 @@ function vector_cart_cross_val(dict)
                             push!(pred, prediction)
 
                         end
-                        all_preds = append!(all_preds, [depth, n_estimator, sample, leaf, MSE_cross_val(pred, prog)])
+                        all_preds = append!(all_preds, [depth, n_estimator, sample, leaf, Loss.MSE(pred, prog, Ys)])
 
                     end
                 end
             end
         end
-        bledy = reshape(all_preds, (length(params) + 1), Int(length(all_preds)/(length(params) + 1)))
-        mm = findmin(bledy[(length(params) + 1),:])
-        minn = mm[2]
-        result = bledy[:, minn]
+
+        bledy = reshape(all_preds, length(params)+1, :)
+        tylko_bledy = bledy[length(params)+1, :]
+
+        indeks_najmniejszego_bledu = findmin(tylko_bledy)[2]
+        result = bledy[:, indeks_najmniejszego_bledu]
 
         to_ret = Dict(
-            "depth" => result[1],
-            "max_n_estimators"=> result[2],
-            "min_samples_split"=> result[3],
-            "min_samples_leaf"=> result[4]
+            "max_depth" => Integer(result[1]),
+            "n_estimators"=> Integer(result[2]),
+            "min_samples_split"=> Integer(result[3]),
+            "min_samples_leaf"=> Integer(result[4])
         )
 
         return to_ret

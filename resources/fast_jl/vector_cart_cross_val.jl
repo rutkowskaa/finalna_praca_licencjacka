@@ -14,13 +14,6 @@ function vector_cart_cross_val(dict)
     params = dict["params"]
     leng = length(Ys)
 
-
-    function MSE_cross_val(preds, prog)
-        actual = Ys[prog:length(Ys)]
-        mse = (1 / length(preds)) * sum((actual - preds).^ 2)
-        return mse
-    end
-
     all_preds = []
 
         for depth = 2: params["max_depth"]
@@ -46,11 +39,10 @@ function vector_cart_cross_val(dict)
                                                             sample,
                                                             0.0,
                                                             rng=1)
-                            #println(apply_tree(model, X[gorny + 1, :]))
+
 
                             prediction = apply_tree(model, X[gorny + 1, :])
                             push!(pred, prediction)
-                            #print(pred)
 
                         end
                         all_preds = append!(all_preds, [depth, sample, leaf, float(Loss.MSE(pred, prog, Ys))])
@@ -59,11 +51,12 @@ function vector_cart_cross_val(dict)
                 end
 
         end
-        bledy = reshape(all_preds, (length(params) + 1), Int(length(all_preds)/(length(params) + 1)))
-        #print(bledy)
-        mm = findmin(bledy[(length(params) + 1),:])
-        minn = mm[2]
-        result = bledy[:, minn]
+        bledy = reshape(all_preds, length(params) + 1, :)
+        tylko_bledy = bledy[length(params) + 1, :]
+        indeks_najmniejszego_bledu = findmin(tylko_bledy)[2]
+        result = bledy[:, indeks_najmniejszego_bledu]
+
+        print(result)
 
         to_ret = Dict(
             "max_depth" => Integer(result[1]),
