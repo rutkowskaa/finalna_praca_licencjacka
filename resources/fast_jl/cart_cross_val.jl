@@ -1,11 +1,5 @@
 include("Loss.jl")
 
-# Uwagi:
-# Julia zaczyna indeksowanie od 1 nie od 0 jak w pythonie - pilnowałem tego, ale jest to duże pole do błędów
-# Reshape w julii zmienia typ obiektu
-# Konwersja python dataframe do julia dataframe jest nietrywialna - konieczne jest korzystanie z array.
-# Arraye w julii są szybsze od np.array, ale konwersja jest automatyczna
-
 function rf_cross_val(dict)
 
     dlugosc_okna = dict["dlugosc_okna"]

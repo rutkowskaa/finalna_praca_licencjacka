@@ -54,8 +54,8 @@ function rf_cross_val(dict)
                 end
             end
         end
-        bledy = reshape(all_preds, length(params), :)
-        tylko_bledy = bledy[length(params), :]
+        bledy = reshape(all_preds, length(params) + 1, :)
+        tylko_bledy = bledy[length(params) + 1, :]
 
         indeks_najmniejszego_bledu = findmin(tylko_bledy)[2]
         result = bledy[:, indeks_najmniejszego_bledu]
