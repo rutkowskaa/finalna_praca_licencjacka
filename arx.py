@@ -55,8 +55,8 @@ def show_forcasts(forecasts, data, data_test):
     plt.grid()
     plt.show()
 
-    print("SUMA: ", sum(data_test.values * forecasts > 0),
-          " / ", len(forecasts))
+    print("SUMA: ", sum(np.squeeze(data_test.values) * np.array(result) > 0),
+          " / ", len(result))
 
 
 show_forcasts(cart_arx.forecast_raw(), cart_arx.data, cart_arx.data_test)

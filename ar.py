@@ -19,16 +19,18 @@ Main.using("DecisionTree")  # bez tych dwóch walidacja nie zadziała
 szereg_norm = Get_Data.Get_Data("^IXIC", start="2018-08-22", end="2019-10-30",
                                 interval="1d").make_diff()
 
-rf_ar = RF_AR(data=szereg_norm, params={"lags": 1}, test_ratio=0.7)
+rf_ar = CART_AR(data=szereg_norm, params={"lags": 1}, test_ratio=0.7)
 
 #Uwaga! Przy zmienianiu algorytmu należy pilnować, aby w 'params' było dokładnie tyle parametrów ile dany model przyjmuje. Inaczej może wyskoczyć błąd.
 # Zauważyłem, że zazwyczaj mniejsze okno = lepsza prognoza. Nie wiem dlaczego, ale warto mieć na uwadze.
-opt = rf_ar.cross_validation_rolling_window_julia(dlugosc_okna=1 / 15, params={
-    "max_depth": 5,
-    "n_estimators": 5,
-    "min_samples_split": 15,
-    "min_samples_leaf": 5
+
+opt = rf_ar.cross_validation_rolling_window_julia(dlugosc_okna=1 / 2, params={
+    "max_depth": 4,
+    #"n_estimators": 5,
+    "min_samples_split": 45,
+    "min_samples_leaf": 25
 })
+
 print("Optymalne ustawienia: ", opt)
 rf_ar.fit(opt)
 
@@ -50,7 +52,7 @@ def show_forcasts(forecasts, data, data_test):
     # Próbowałem wyprowadzić MSE penalizujące przeciwny kierunek prognozy do wartości rzeczywistej,
     # ale nie zauważyłem żadnej różnicy
     #
-    print("SUMA: ", sum(np.squeeze(data_test.values) * np.array(forecasts) > 0),
-          " / ", len(forecasts))
+    print("SUMA: ", sum(np.squeeze(data_test.values) * np.array(result) > 0),
+          " / ", len(result))
 
 show_forcasts(rf_ar.forecast_raw(), rf_ar.data, rf_ar.data_test)
